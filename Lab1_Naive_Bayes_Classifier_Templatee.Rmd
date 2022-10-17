@@ -85,6 +85,9 @@ library(dplyr)
 library(ggplot2)
 library(r2r)
 library(tidyr)
+library(stringr)
+library(rlist)
+library(pipeR)
 ```
 
 ## Instructions
@@ -104,9 +107,9 @@ library(tidyr)
 
 -   shortly summarize your work
 
--   do not forget to submit both the (compiled) Rmd source file and the .html
-    output
-    
+-   do not forget to submit both the (compiled) Rmd source file and the
+    .html output
+
 ### Data pre-processing
 
 -   Read the *.csv* data files.
@@ -151,8 +154,8 @@ test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
 
 ```{r}
 # note the power functional features of R bring us!
-X = train[, -length(train)]
-y = train[length(train)]
+X = test[, -length(test)]
+y = test[length(test)]
 
 # X <- unnest_tokens(train, 'splitted', 'text', token="words") %>%
 # filter(!splitted %in% splitted_stop_words)
@@ -179,7 +182,8 @@ naiveBayes <- setRefClass("naiveBayes",
        # here it would be wise to have some vars to store intermediate result
        # frequency dict etc. Though pay attention to bag of wards! 
        fields = list(
-         tidy_X = "data.frame"
+         tidy_X = "data.frame",
+         author_count = "data.frame"
        ),
        methods = list(
                     # prepare your training data as X - bag of words for each of your
@@ -191,18 +195,44 @@ naiveBayes <- setRefClass("naiveBayes",
                       
                       tidy_X <<- unnest_tokens(X, 'splitted', 'text', token="words") %>%
                       filter(!splitted %in% splitted_stop_words)
+                      
+                      author_count <<- y %>% count(author)
                         
                       tidy_X <<- tidy_X %>%
                         count(splitted,sort=TRUE, author) %>%
                         pivot_wider(names_from=author, values_from=n)
                       
-                      tidy_X <<- data.frame(tidy_X[-c(1)], row.names = tidy_X$splitted)
+                      tidy_X <<- data.frame(tidy_X[-c(1)], row.names = tidy_X$splitted) %>% replace(is.na(.), 0) + 1
                     },
                     
                     # return prediction for a single message 
                     predict = function(message)
                     {
-                      print(tidy_X)
+                      result = c()
+                      message <- str_replace_all(message, "[\\.,:;!?\"\\()]", "")
+                      message <- tolower(message)
+                      string_arr <- strsplit(message, " ")[[1]]
+                      
+                      for (author in 1:3) {
+                        author_probability = author_count[author,2] / sum(author_count[, "n"])
+                        author_words_sum = sum(tidy_X[author])
+                        message_prob <- 1
+                        
+                        for (idx in 1:length(string_arr)) {
+                          
+                          if (!(string_arr[idx] %in% splitted_stop_words)) {
+                            word_count <- tidy_X[string_arr[idx], author]
+                            
+                            if (!is.na(word_count)) {
+                              message_prob = message_prob * (word_count / author_words_sum)
+                            }
+                          }
+                        }
+                        
+                        result = append(result, author_probability * message_prob)
+                      }
+                      
+                      return(which(result == max(result))[1])
                     },
                     
                     # score you test set so to get the understanding how well you model
@@ -212,16 +242,28 @@ naiveBayes <- setRefClass("naiveBayes",
                     # try how well your model generalizes to real world data! 
                     score = function(X_test, y_test)
                     {
-                         # TODO
+                      correct_guesses = 0
+                      data_set_length = length(X_test$text)
+
+                      for (i in 1:length(X_test$text)) {
+                        result_of_prediction = predict(X_test$text[i])
+
+                        if (author_count[result_of_prediction, 1] == y_test$author[i]) {
+                          correct_guesses = correct_guesses + 1
+                        }
+                      }
+
+                      print(correct_guesses / data_set_length)
                     }
 ))
 
 model = naiveBayes()
 model$fit(X, y)
-model$predict()
+model$score(X, y)
 ```
 
 ## Measure effectiveness of your classifier
+
 -   Note that accuracy is not always a good metric for your classifier.
     Look at precision and recall curves, F1 score metric.
 -   Visualize them.
