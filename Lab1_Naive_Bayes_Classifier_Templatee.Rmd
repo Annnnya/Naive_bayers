@@ -84,6 +84,7 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 library(r2r)
+library(tidyr)
 ```
 
 ## Instructions
@@ -149,17 +150,18 @@ test <-  read.csv(file = test_path, stringsAsFactors = FALSE)
 ```
 
 ```{r}
-# note the power functional features of R bring us! 
-tidy_text <- unnest_tokens(train, 'splitted', 'text', token="words") %>%
-             filter(!splitted %in% splitted_stop_words)
+# note the power functional features of R bring us!
+X = train[, -length(train)]
+y = train[length(train)]
 
-
-
-tidy_text %>% count(splitted,sort=TRUE)
-
-sum(tidy_text$splitted == "heard" & tidy_text$author == "HP Lovecraft")
-tidy_text = tidy_text[-c(1)]
-
+# X <- unnest_tokens(train, 'splitted', 'text', token="words") %>%
+# filter(!splitted %in% splitted_stop_words)
+# 
+# X <- X %>%
+#   count(splitted,sort=TRUE, author) %>%
+#   pivot_wider(names_from=author, values_from=n)
+# 
+# X = data.frame(X[-c(1)], row.names = X$splitted)
 ```
 
 ### Data visualization
@@ -176,20 +178,31 @@ naiveBayes <- setRefClass("naiveBayes",
                           
        # here it would be wise to have some vars to store intermediate result
        # frequency dict etc. Though pay attention to bag of wards! 
-       fields = list(),
+       fields = list(
+         tidy_X = "data.frame"
+       ),
        methods = list(
                     # prepare your training data as X - bag of words for each of your
                     # messages and corresponding label for the message encoded as 0 or 1 
                     # (binary classification task)
                     fit = function(X, y)
                     {
-                         
+                      X = cbind(X, y)
+                      
+                      tidy_X <<- unnest_tokens(X, 'splitted', 'text', token="words") %>%
+                      filter(!splitted %in% splitted_stop_words)
+                        
+                      tidy_X <<- tidy_X %>%
+                        count(splitted,sort=TRUE, author) %>%
+                        pivot_wider(names_from=author, values_from=n)
+                      
+                      tidy_X <<- data.frame(tidy_X[-c(1)], row.names = tidy_X$splitted)
                     },
                     
                     # return prediction for a single message 
                     predict = function(message)
                     {
-                         # TODO
+                      print(tidy_X)
                     },
                     
                     # score you test set so to get the understanding how well you model
@@ -204,7 +217,8 @@ naiveBayes <- setRefClass("naiveBayes",
 ))
 
 model = naiveBayes()
-model$fit()
+model$fit(X, y)
+model$predict()
 ```
 
 ## Measure effectiveness of your classifier
