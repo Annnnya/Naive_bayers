@@ -272,6 +272,7 @@ model2$visualize_matrix(confusion_matrix)
 ```
 
 ## Measure effectiveness of your classifier
+See our answer in the README file
 
 -   Note that accuracy is not always a good metric for your classifier.
     Look at precision and recall curves, F1 score metric.
@@ -279,6 +280,7 @@ model2$visualize_matrix(confusion_matrix)
 -   Show failure cases.
 
 ## Conclusions
+See our answer in the README file
 
 Summarize your work by explaining in a few sentences the points listed
 below.
