@@ -259,12 +259,7 @@ naiveBayes <- setRefClass("naiveBayes",
                       colnames(test_data_tible) = c("Target","Prediction","N")
                       plot_confusion_matrix(
                         test_data_tible,
-                        add_sums=T,
-                        sums_settings = sum_tile_settings(
-                            palette = "Oranges",
-                            label = "Total",
-                            tc_tile_border_color = "black"
-                        )
+                        add_sums=T
                     )
                     }
 ))
