@@ -82,13 +82,14 @@ classifier works.
 library(tidytext)
 library(readr)
 library(dplyr)
-library(ggplot2)
 library(r2r)
 library(tidyr)
 library(stringr)
 library(rlist)
 library(pipeR)
 library(caret)
+library(cvms)
+library(ggimage)
 ```
 
 ## Instructions
@@ -198,10 +199,6 @@ naiveBayes <- setRefClass("naiveBayes",
                         pivot_wider(names_from=author, values_from=n)
                       
                       tidy_X <<- data.frame(tidy_X[-c(1)], row.names = tidy_X$splitted) %>% replace(is.na(.), 0) + 1
-                      
-                      print(tidy_X)
-                      
-                      author_count
                     },
                     
                     # return prediction for a single message 
@@ -254,12 +251,29 @@ naiveBayes <- setRefClass("naiveBayes",
                       y_test$author = as.factor(y_test$author)
                       result$pred = as.factor(result$pred)
                       return(confusionMatrix(y_test$author, result$pred))
+                    },
+                    
+                    visualize_matrix = function(confusion_matrix)
+                    {
+                      test_data_tible = as_tibble(confusion_matrix$table)
+                      colnames(test_data_tible) = c("Target","Prediction","N")
+                      plot_confusion_matrix(
+                        test_data_tible,
+                        add_sums=T,
+                        sums_settings = sum_tile_settings(
+                            palette = "Oranges",
+                            label = "Total",
+                            tc_tile_border_color = "black"
+                        )
+                    )
                     }
 ))
 
 model2 = naiveBayes()
 model2$fit(X, y)
-model2$score(X_test, y_test)
+confusion_matrix = model2$score(X_test, y_test)
+print(confusion_matrix)
+model2$visualize_matrix(confusion_matrix)
 ```
 
 ## Measure effectiveness of your classifier
