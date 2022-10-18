@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Lab Assignment 1: Naive Bayes Classifier
 
-### *Name1 Surname1, Name2 Surname2, Name3 Surname3*
+### *Nazar Kononenko, Anna Polova, Nataliia Chaika*
 
 ## Introduction
 
