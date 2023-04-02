@@ -1,12 +1,3 @@
-# Naive_bayers
-
-**Team 5**
-
-**Team members:** Nazar Kononenko, Anna Polova, Natalia Chaika
-
-**Variant 0**
-
-
 
 **Description:**
 _________
